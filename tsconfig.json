@@ -1,3 +1,32 @@
 {
+  "compilerOptions": {
+    "allowJs": false,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "jsx": "react-native",
+    "module": "es2015",
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": false,
+    "sourceMap": true,
+    "target": "esnext",
+    "lib": ["esnext", "dom"],
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "baseUrl": "src",
+    "paths": {
+      "@components": ["components"],
+      "@components/*": ["components/*"],
+      "@screens": ["screens"],
+      "@screens/*": ["screens/*"],
+      "@navigators": ["navigators"],
+      "@navigators/*": ["navigators/*"],
+      "@services": ["services"],
+      "@services/*": ["services/*"],
+      "@theme": ["theme"],
+      "@theme/*": ["theme/*"],
+    }
+  },
   "extends": "@react-native/typescript-config/tsconfig.json"
 }

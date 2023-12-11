@@ -1,11 +1,15 @@
 #import "AppDelegate.h"
+#import <GoogleMaps/GoogleMaps.h>
 
 #import <React/RCTBundleURLProvider.h>
 
 @implementation AppDelegate
 
+// AIzaSyDK9ww4wqbaE7pXP2QN88L1dnb9aFIxKbo
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+  [GMSServices provideAPIKey:@"AIzaSyDK9ww4wqbaE7pXP2QN88L1dnb9aFIxKbo"];
   self.moduleName = @"Etap";
   // You can add your custom initial props in the dictionary below.
   // They will be passed down to the ViewController used by React Native.
