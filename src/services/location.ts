@@ -4,7 +4,7 @@ export const startLocationTracking = (onLocationUpdate: Function) => {
   const watchId = Geolocation.watchPosition(
     position => onLocationUpdate(position),
     error => console.log(error),
-    {enableHighAccuracy: true, distanceFilter: 2},
+    {enableHighAccuracy: true, distanceFilter: 10},
   );
 
   return watchId;
