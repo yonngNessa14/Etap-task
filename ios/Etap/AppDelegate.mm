@@ -5,11 +5,11 @@
 
 @implementation AppDelegate
 
-// AIzaSyDK9ww4wqbaE7pXP2QN88L1dnb9aFIxKbo
+// AIzaSyCKDNz0m-HP6e7tM3kHfP5QMQQUTlbmwA0
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-  [GMSServices provideAPIKey:@"AIzaSyDK9ww4wqbaE7pXP2QN88L1dnb9aFIxKbo"];
+  [GMSServices provideAPIKey:@"AIzaSyCKDNz0m-HP6e7tM3kHfP5QMQQUTlbmwA0"];
   self.moduleName = @"Etap";
   // You can add your custom initial props in the dictionary below.
   // They will be passed down to the ViewController used by React Native.

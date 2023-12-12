@@ -14,6 +14,7 @@
     "lib": ["esnext", "dom"],
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    "typeRoots": ["./src/types"],
     "baseUrl": "src",
     "paths": {
       "@components": ["components"],
@@ -26,6 +27,8 @@
       "@services/*": ["services/*"],
       "@theme": ["theme"],
       "@theme/*": ["theme/*"],
+      "@hooks": ["hooks"],
+      "@hooks/*": ["hooks/*"],
     }
   },
   "extends": "@react-native/typescript-config/tsconfig.json"

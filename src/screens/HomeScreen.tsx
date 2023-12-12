@@ -1,86 +1,162 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import {Alert, Linking, View, StyleSheet} from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
+import {View, ViewStyle} from 'react-native';
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import MapView, {LatLng, PROVIDER_GOOGLE} from 'react-native-maps';
 import {startLocationTracking, stopLocationTracking} from '@services/location';
-import Geolocation from 'react-native-geolocation-service';
+import CustomMarker from '@components/Map/CustomMarkers';
+import {Icon} from '@components';
+import {trigger} from 'react-native-haptic-feedback';
+import {useLocation} from '@hooks';
+import {MapType} from '@components/Map';
+import {AppStackScreenProps} from '@navigators/AppNavigator';
+import BottomSheet from '@gorhom/bottom-sheet';
+import {BottomSheetFooter} from '@components/BottomSheet';
 
-export const HomeScreen = () => {
+interface HomeScreenProps extends AppStackScreenProps<'Home'> {}
+export const HomeScreen: FC<HomeScreenProps> = _props => {
+  const {navigation} = _props;
+  const {isPermissionGranted, getLocationPermission} = useLocation();
+
   const [currentLocation, setCurrentLocation] =
     useState<GeolocationCoordinates>();
-  const [watchId, setWatchId] = useState<Number>(0);
 
-  const hasPermissionIOS = useCallback(async () => {
-    const openSetting = () => {
-      Linking.openSettings().catch(() => {
-        Alert.alert('Unable to open settings');
-      });
-    };
-    const newStatus = await Geolocation.requestAuthorization('whenInUse');
+  const [watchId, setWatchId] = useState<number>(0);
+  const [markers, setMarkers] = useState<LatLng[]>([]);
 
-    if (newStatus === 'granted') {
-      return true;
-    }
+  const [switchVal, setSwitchVal] = useState(false);
+  const [startTracking, setStartTracking] = useState(true);
 
-    if (newStatus === 'denied') {
-      Alert.alert('Location permission denied');
-    }
+  const [showSettings, setShowSettings] = useState(false);
 
-    if (newStatus === 'disabled') {
-      Alert.alert(
-        'Turn on Location Services to allow "RentIt" to determine your location.',
-        '',
-        [
-          {text: 'Go to Settings', onPress: openSetting},
-          {text: "Don't Use Location", onPress: () => {}},
-        ],
-      );
-    }
+  const [sateliteMode, setSateliteMode] = useState<boolean>(false);
 
-    return false;
-  }, []);
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  // variables
+  const snapPoints = useMemo(() => ['10%', '50%', '75%'], []);
 
   useEffect(() => {
-    hasPermissionIOS();
+    !isPermissionGranted && getLocationPermission();
     const onLocationUpdate = (position: GeolocationPosition) => {
-      console.log('here', position);
-
       setCurrentLocation(position.coords);
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    const watchId = startLocationTracking(onLocationUpdate);
-    console.log('new log id', {watchId});
+    const trackingId = startLocationTracking(onLocationUpdate);
 
-    setWatchId(watchId);
+    setWatchId(trackingId);
 
-    return () => stopLocationTracking(watchId);
-  }, [hasPermissionIOS]);
+    return () => stopLocationTracking(trackingId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPermissionGranted, startTracking]);
+
+  const addNewMarker = useCallback(
+    e => {
+      const copiedMarkers = [...markers];
+      const newMarker = e.nativeEvent.coordinate;
+
+      copiedMarkers.push(newMarker);
+
+      setMarkers(copiedMarkers);
+      trigger('impactLight');
+    },
+    [markers],
+  );
+
+  const changeMapType = useCallback(() => {
+    setSateliteMode(!sateliteMode);
+  }, [sateliteMode]);
+
+  const memoizedMapType = useMemo(() => {
+    return <MapType {...{sateliteMode, changeMapType}} />;
+  }, [changeMapType, sateliteMode]);
+
+  const headerRight = useMemo(
+    () => (
+      <Icon icon="settings" onPress={() => setShowSettings(!showSettings)} />
+    ),
+    [showSettings],
+  );
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => headerRight,
+    });
+  }, [headerRight, navigation]);
 
   return (
-    <View style={StyleSheet.absoluteFillObject}>
-      {currentLocation && (
-        <MapView.Animated
-          provider={PROVIDER_GOOGLE}
-          style={StyleSheet.absoluteFillObject}
-          zoomEnabled
-          minZoomLevel={10}
-          maxZoomLevel={500}
-          initialRegion={{
-            latitude: currentLocation.latitude,
-            longitude: currentLocation.longitude,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }}>
-          <Marker
-            coordinate={{
+    <View style={$flex}>
+      <View style={$flex}>
+        {currentLocation && (
+          <MapView.Animated
+            provider={PROVIDER_GOOGLE}
+            style={$flex}
+            zoomEnabled
+            showsMyLocationButton
+            mapType={sateliteMode ? 'hybrid' : 'standard'}
+            showsBuildings={true}
+            showsCompass={true}
+            showsUserLocation={true}
+            minZoomLevel={10}
+            maxZoomLevel={500}
+            onLongPress={addNewMarker}
+            initialRegion={{
               latitude: currentLocation.latitude,
               longitude: currentLocation.longitude,
-            }}
-            title="Current Location"
-          />
-        </MapView.Animated>
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            }}>
+            {/* user location */}
+            <CustomMarker
+              coordinates={{
+                latitude: currentLocation.latitude,
+                longitude: currentLocation.longitude,
+              }}
+            />
+            {markers.map((marker, index) => (
+              <CustomMarker key={index} coordinates={marker} />
+            ))}
+          </MapView.Animated>
+        )}
+        {memoizedMapType}
+      </View>
+
+      {showSettings && (
+        <BottomSheetFooter
+          ref={bottomSheetRef}
+          switchVal={switchVal}
+          snapPoints={snapPoints}
+          onValueChange={val => {
+            setSwitchVal(val);
+            if (val) {
+              // start tracking doesnt really do anything, its just to refresh the useEffect, hence the reason i am not giving it a true val
+              return setStartTracking(!startTracking);
+            }
+            stopLocationTracking(watchId);
+          }}
+          onPress={(data, details = null) => {
+            const {lat, lng}: any = details?.geometry.location;
+            setMarkers([...markers, {latitude: lat, longitude: lng}]);
+            console.log(markers);
+          }}
+          onDonePress={() => {
+            bottomSheetRef.current?.close();
+          }}
+          onClose={() => {
+            setShowSettings(false);
+          }}
+        />
       )}
     </View>
   );
+};
+
+const $flex: ViewStyle = {
+  flex: 1,
 };
